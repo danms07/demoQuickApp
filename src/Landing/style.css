@@ -1,0 +1,56 @@
+.container {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.toast-box {
+  width: 100%;
+  padding: 25px 60px 40px;
+  border-radius: 34px;
+  background-color: white;
+  flex-direction: column;
+}
+
+.eyes-input-box {
+  width: 100%;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+.titleText {
+  font-size: 50px;
+  font-weight: 700;
+}
+.displayText {
+  font-size: 45px;
+  font-weight: 400;
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+.modal {
+  position: fixed;
+  flex-direction: column;
+  justify-content: flex-end;
+  width: 100%;
+  height: 100%;
+  padding: 0 34px 50px;
+  background-color: rgba(0, 0, 0, 0.18);
+  animation-name: Modal;
+  animation-duration: 130ms;
+  animation-timing-function: ease-in;
+}
+
+.btn {
+  font-size: 35px;
+}
+
+.okBtn {
+  width: 50%;
+  text-align: center;
+  color: #00ff00;
+}
+
+.retryBtn {
+  width: 50%;
+  text-align: center;
+  color: #0000ff;
+}

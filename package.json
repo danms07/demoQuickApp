@@ -1,0 +1,14 @@
+{
+  "name": "com.demo.dtse.html",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "fa-build": "node node_modules/webpack/bin/webpack.js --progress --config ./node_modules/fa-toolkit/webpack.config.js",
+    "fa-watch": "node node_modules/webpack/bin/webpack.js --watch --progress --config ./node_modules/fa-toolkit/webpack.config.js",
+    "fa-release": "node ./node_modules/cross-env/src/bin/cross-env.js uglifyjs=true sign=release node_modules/webpack/bin/webpack.js --progress --config ./node_modules/fa-toolkit/webpack.config.js"
+  },
+  "devDependencies": {
+    "fa-toolkit": "file:fa-toolkit-12.5.1-Stable.301.tgz",
+    "cross-env": "^7.0.2"
+  }
+}

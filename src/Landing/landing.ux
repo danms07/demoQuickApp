@@ -1,0 +1,75 @@
+<template>
+  <div class="item-container">
+    <text onclick="showToast2">Custom pop-up 2</text>
+    <!-- Pop-up -->
+    <div if="{{isShow}}" class="modal">
+      <div class="toast-box">
+        <block>
+          <stack class="eyes-input-box">
+            
+            <div style="flex-direction: column; width: 100%" if="{{ifShow2}}">
+              <text class="titleText">{{title}}</text>
+              <text class="displayText"> {{displayText}}
+                <!--<span>By tapping Agree, you agree to the above terms as well as the</span>
+                <a style="color: #0000ff" onclick="toast">XX User Agreement</a>
+                <span>and</span>
+                <a style="color: #0000ff" onclick="toast">Privacy Statement About XX</a>
+                .-->
+              </text>
+              <div style="width: 100%">
+                <text class="btn okBtn" onclick="hide">OK</text>
+                <text class="btn retryBtn" onclick="hide">Reintentar</text>
+              </div>
+            </div>
+          </stack>
+        </block>
+      </div>
+    </div>
+  </div>
+</template>
+<style>
+    @import 'style.css';      
+      
+</style>
+<script>
+    import prompt from "@system.prompt"
+    export default {
+        data: {
+            list: [1, 2, 3],
+            isShow: false,
+            ifShow1: false,
+            ifShow2: false,
+
+            displayText: "Habla Ahora",
+            title:"Escuchando..."
+        },
+        onInit: function () {
+
+            console.info("Application onInit");
+        },
+        onShow(options) {
+            console.info("Application onShow");
+        },
+        onHide(options) {
+            console.info("Application onHide");
+        },
+        showToast1() {
+            this.isShow = true;
+            this.ifShow1 = true
+            this.ifShow2 = false
+        },
+        showToast2() {
+            this.isShow = true;
+            this.ifShow1 = false
+            this.ifShow2 = true
+        },
+        hide() {
+            this.isShow = false;
+        },
+        toast() {
+            prompt.showToast({
+                message: 'View privacy agreement'
+            })
+        }
+    };
+</script>

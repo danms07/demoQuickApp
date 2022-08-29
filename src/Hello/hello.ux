@@ -1,0 +1,373 @@
+<template>
+  <div class="doc-page">
+    <web class="web-page" src="{{loadUrl}}"
+     trustedurl="{{list}}" 
+     onpagestart="onPageStart" 
+     onpagefinish="onPageFinish" 
+     onmessage="onMessage" 
+     ontitlereceive="onTitleReceive" 
+     onerror="onError" 
+     id="web" 
+     supportzoom="{{supportZoom}}" 
+     wideviewport="{{wideViewport}}" 
+     overviewmodeinload="{{overViewModeLoad}}" 
+     useragent="{{userAgent}}" 
+     allowthirdpartycookies="{{allowThirdPartyCookies}}"
+      multiwindow="{{multiwindow}}" 
+      jumppolicy="{{jumppolicy}}">
+      </web>
+    <image style="position: fixed;left: {{this.clientX}};top:{{this.clientY}}" class="image" src="/Common/logo.png" ontouchmove="touchmove" onclick="triggerASR"></image>
+    <div if="{{isShow}}" class="modal">
+      <div class="toast-box">
+        <block>
+          <stack class="eyes-input-box">
+            
+            <div style="flex-direction: column; width: 100%">
+              <text class="titleText">{{dialogTitle}}</text>
+              <text class="displayText"> {{displayText}}
+              </text>
+              <div style="width: 100%">
+                <text class="btn okBtn" onclick="ok">OK</text>
+                <text class="btn retryBtn" onclick="retry">Reintentar</text>
+              </div>
+            </div>
+          </stack>
+        </block>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style>
+    .doc-page {
+      flex-direction: column;
+      flex-direction: column;
+      justify-content: center;
+      align-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      position: fixed;
+    }
+
+    .web-page {
+      width: 100%;
+      height: 100%;
+    }
+
+    .image {
+      border-radius: 50px;
+      height: 100px;
+      align-content: flex-end;
+    }
+
+    .toast-box {
+      width: 100%;
+      padding: 25px 60px 40px;
+      border-radius: 34px;
+      background-color: white;
+      flex-direction: column;
+    }
+
+    .eyes-input-box {
+      width: 100%;
+      flex-direction: row;
+      justify-content: flex-end;
+    }
+    .titleText {
+      font-size: 50px;
+      font-weight: 700;
+    }
+    .displayText {
+      font-size: 45px;
+      font-weight: 400;
+      padding-top: 60px;
+      padding-bottom: 60px;
+    }
+    .modal {
+      position: fixed;
+      flex-direction: column;
+      justify-content: flex-end;
+      width: 100%;
+      height: 100%;
+      padding: 0 34px 50px;
+      background-color: rgba(0, 0, 0, 0.18);
+      animation-name: Modal;
+      animation-duration: 130ms;
+      animation-timing-function: ease-in;
+    }
+
+    .btn {
+      font-size: 35px;
+    }
+
+    .okBtn {
+      width: 50%;
+      text-align: center;
+      color: #00ff00;
+    }
+
+    .retryBtn {
+      width: 50%;
+      text-align: center;
+      color: #0000ff;
+    }
+</style>
+<script>
+    import webview from '@system.webview';
+    import router from "@system.router";
+    import prompt from "@system.prompt";
+    import mlasr from '@service.ml.asr'
+
+    export default {
+        props: ['websrc'],
+        data: {
+            //For the input dialog
+            isShow: false,
+            displayText: "Habla Ahora",
+            dialogTitle:"Escuchando...",
+            //for the floating button
+            clientX: "1px",
+            clientY: "900px",
+            // For mroe information about <web>, please check :
+            // https://developer.huawei.com/consumer/en/doc/development/quickApp-References/quickapp-component-web
+            // TODO Replace the link to the H5 app
+            loadUrl: "https://developer.huawei.com/consumer/en/",
+            // Attribute allowthirdpartycookies, indicates whether cookies can be delivered in cross-domain mode.
+            // If you need login Google Account or Other Account, Please set TRUE.
+            allowThirdPartyCookies: true,
+            //Attribute supportzoom, indicates whether the H5 page can be zoomed with gestures.
+            supportZoom: true,
+            wideViewport: true,
+            overViewModeLoad: true,
+            // userAgent of the web component. The quick app userAgent is used by default. You can use Chrome UA like 
+            // 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36'
+            userAgent: "default",
+            // Here the whitelist settings, when the loading page has multiple addresses, such as the successful loading of the login address and the
+            // inconsistent entry address, it needs to set the whitelist to do so.
+            list: ["new RegExp('https?.*')"],
+            // Indicates whether the web component supports multi-window display.
+            multiwindow: false,
+            // Multi-window opening policy. 
+            // browser: Multiple windows started in the web component  are opened in the system browser.
+            // default: Multiple windows started in the web component  are opened in the quick app.
+            jumppolicy: 'default',
+            baseUrl: "https://developer.huawei.com/consumer/en/doc/",
+
+            parameters: {}
+
+        },
+        onInit(params) {
+            console.info('onInit: ');
+            this.parameters = params;
+            this.initPushKit();
+
+
+        },
+        onPageStart(e) {
+            console.info('pagestart: ' + e.url)
+        },
+        // Each page switch triggers
+        onPageFinish(e) {
+            console.info('pagefinish: ' + e.url, e.canBack, e.canForward);
+        },
+        onTitleReceive(e) {
+            this.title = e.title;
+        },
+        onError(e) {
+            console.info('pageError : ' + e.errorMsg)
+        },
+        onMessage(e) {
+            console.info('onmessage e = ' + e.message + ", url = " + e.url);
+        },
+
+        onShow: function () {
+            if (Object.keys(this.parameters).length > 0) {
+                var query = "search?"
+                console.log("Params: " + JSON.stringify(this.parameters));
+                Object.keys(this.parameters).forEach(key => query += key + "=" + this.parameters[key] + "&");
+
+                webview.loadUrl({
+                    url: this.baseUrl + query
+                });
+            }
+            /*const prompt=require("@system.prompt");
+            prompt.showToast({
+                message: JSON.stringify(params),
+                duration: 2000,
+                gravity: 'bottom'
+            })*/
+            console.info(" onshow");
+
+        },
+
+        onRefresh(params) {
+            this.parameters = params;
+            prompt.showToast({
+                message: JSON.stringify(params),
+                duration: 2000,
+                gravity: 'bottom'
+            })
+            console.info(`Triggered：onRefresh`);
+        },
+        onHide: function () {
+            console.info("  onHide");
+            this.parameters = {};
+        },
+        onBackPress() {
+            console.log('onBackPress')
+            this.$element('web').canBack({
+                callback: function (e) {
+                    if (e) {
+                        console.log('web back')
+                        this.$element('web').back()
+                    } else {
+                        console.log('router back')
+                        router.back()
+                    }
+                }.bind(this)
+            })
+            return true
+        },
+
+        checkToken() {
+            var subscribeToken = this.$app.$def.dataApp.pushtoken;
+            console.log("checkToken subscribeToken= " + subscribeToken);
+            var storage = require("@system.storage");
+            var that = this;
+            storage.get({
+                key: 'token',
+                success: function (data) {
+                    console.log("checkToken handling success data= " + data);
+                    if (subscribeToken !== data) {
+                        // Report to your server.
+                        //that.uploadToken(subscribeToken);
+                        that.saveToken(subscribeToken);
+                    }
+                },
+                fail: function (data, code) {
+                    console.log("handling fail, code = " + code);
+                }
+            })
+        },
+        saveToken(subscribeToken) {
+            console.log("saveToken " + subscribeToken);
+            var storage = require("@system.storage");
+            storage.set({
+                key: 'token',
+                value: subscribeToken,
+                success: function (data) {
+                    console.log("saveToken handling success");
+                },
+                fail: function (data, code) {
+                    console.log("saveToken handling fail, code = " + code);
+                }
+            });
+
+        },
+
+        initPushKit() {
+            const push = require('@service.push');
+            const provider = push.getProvider()
+            const that = this;
+            if (provider === 'huawei') {
+                push.subscribe({
+                    success: function (data) {
+                        that.saveToken(data.regId);
+                    },
+                    fail: function (data, code) {
+                        console.log('push.subscribe failed, result data = ' + JSON.stringify(data) + ', code = ' + code);
+                    },
+                    complete: function () {
+                        console.log('push.subscribe completed');
+                    }
+                })
+            }
+        },
+
+        addToClipboard(copyText) {
+            const clipboard = require("@system.clipboard")
+            clipboard.set({
+                text: copyText
+            });
+
+            prompt.showToast({
+                message: 'Content added to the clipboard',
+                duration: 2000,
+                gravity: 'bottom'
+            })
+
+        },
+
+        touchmove: function (TouchEvent) {
+            console.log(JSON.stringify(TouchEvent.changedTouches));
+            this.clientX = (TouchEvent.changedTouches[0].clientX - 70) + "px"
+            this.clientY = (TouchEvent.changedTouches[0].clientY - 70) + "px"
+            console.log("clientX = " + TouchEvent.changedTouches[0].clientX);
+            console.log("clientY = " + TouchEvent.changedTouches[0].clientY);
+        },
+
+        resetDialog: function(){
+            this.isShow=false;
+            this.displayText= "Habla Ahora";
+            this.dialogTitle="Escuchando...";
+        },
+
+        ok: function(){
+            const query=this.displayText;
+            this.resetDialog();
+            const link=this.baseUrl +"search?type=all&val="+ query
+            webview.loadUrl({ url: link});
+        },
+
+        retry: function(){
+            this.resetDialog();
+            this.triggerASR();
+        },
+        
+        triggerASR: function () {
+            //this.isShow=true;
+            ///*
+            const that=this;
+            mlasr.start({
+                appId: '106892223', //String 参数，必填
+                apiKey: 'DAEDAPTNS9PInqcXMdtHogP/G6geb0OurBgIWSgd5hy0/B4FeDx123qU4wP0M9JIS+UWnm5t27cCbhMPSePeAiWpyHyr1V12UhTLyQ==', //String 参数，必填，鉴权，设置apiKey。
+                language: 'en-US', //String 参数，非必填，设置识别语言，可不传，默认识别中文：【zh-CN】: 中文；【en-US】: 英文；【fr-FR】: 法语；【es-ES】西班牙语；【de-DE】:德语。
+                feature: 11, //Number 参数，非必填，设置识别文本返回模式为边识别边出字，可不传，默认为边识别边出字：【11】：通过onRecognizingResults事件回调，识别同时返回文字；【12】：通过onResults事件回调，识别完成后返回文字；
+                
+                callback: (eventName, ...data) => { //回调方法，返回1个或多个参数，第一个参数为事件名称(eventName)，其它参数视业务而定。
+                    console.log(eventName, ...data);
+                    switch (eventName) {
+                        case 'onStartListening': //录音器开始接收声音。
+                            that.isShow=true;
+                            break;
+                        case 'onStartingOfSpeech'://用户开始讲话，即语音识别器检测到用户开始讲话
+                            break;
+                        case 'onVoiceDataReceived'://返回给用户原始的PCM音频流和音频能量。
+                            //let voice = data[0], energy = data[1];
+                            break;
+                        case 'onRecognizingResults'://从MLAsrRecognizer接收到持续语音识别的文本。
+                            let partialResults = data[0];
+                            console.log(JSON.stringify(partialResults))
+                            that.displayText=JSON.stringify(partialResults);
+                            break;
+                        case 'onResults'://语音识别的文本数据。
+                            let results = data[0];
+                            that.displayText=JSON.stringify(results);
+                            that.title="Buscar:"
+                            JSON.stringify(results);
+                            mlasr.stop();
+                            
+                            break;
+                        case 'onState'://通知应用状态发生改变。
+                            //let state = data[0];
+                            break;
+                    }
+                },
+                fail: (errMsg, errCode) => { //失败回调，识别发生错误后调用该接口。
+                    console.log("error:", errMsg);
+                }
+            })// */
+        }
+    }
+</script>

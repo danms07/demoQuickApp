@@ -1,0 +1,48 @@
+{
+  "package": "com.demo.dtse.html",
+  "name": "DemoHTML5",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "icon": "/Common/logo.png",
+  "minPlatformVersion": 1076,
+  "features": [
+    {
+      "name": "system.prompt"
+    },
+    {
+      "name": "service.push"
+    },
+    {
+      "name": "system.storage"
+    },
+    {
+      "name": "system.clipboard"
+    },
+    {
+      "name": "system.router"
+    },
+    {
+      "name": "system.shortcut"
+    },
+    {"name": "system.webview"},
+    {"name": "service.ml.asr"}
+  ],
+  "config": {},
+  "router": {
+    "entry": "Hello",
+    "pages": {
+      "Hello": {
+        "launchMode": "singleTask",
+        "component": "hello"
+      },
+      "Landing": {
+        "component": "landing"
+      }
+    }
+  },
+  "display": {
+    "menu": true,
+    "titleBar": false,
+    "orientation": "auto"
+  }
+}
